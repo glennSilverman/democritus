@@ -1,0 +1,48 @@
+Democritus is an example Lift Content Management System.
+
+Logged in users can create content that complies with
+Atom Publishing Protocol 1.0, feed the title and description
+to the home page, and display the full page when the title link
+is clicked.
+
+The system uses wymeditor for content creation and also supports
+nested superfish menus which can be linked to content via rewriteRequests.
+
+The content can also be fed to third-party RSS readers, such as
+Google Blogger and WebPress.
+
+Under development, but not yet included, is role-based authorization
+for managing content and dynamic menu creation.
+
+
+Set up and useage:
+
+You can use derby for your database if you must, but the program is configured for mysql, so you will
+need to have a running instance of mysql. The pom includes the mysql jdbc driver as a dependency. 
+
+Create a database schema (the default is lift_democritus) to store the
+Lift mapper entities and configure for your mysql username and password, like so, 
+
+val dbUrl: String = Props.get("db.url") openOr
+    "jdbc:mysql://localhost:3306/lift_democritus?user=<username>&password=<password>"
+    
+in Boot.scala.
+
+To run, simply create a directory on your local drive, and
+edit data_dev in src/main/resources/democritus.properties to use that directory.
+
+eg: data_dev=C:/democritus_data/
+
+This is where your content pages will be stored.
+
+Create a user and go to the List Contents menu to start adding and editing 
+content. Make sure to complete the page and tag entries. Do not include an extension
+on your page entry. All pages have an html extension by default.
+
+To view your content on the home page, edit the tags attribute in <lift:ManageContents.feed tags="test"/> in index.html
+to include a comma-separated list of tags that you have created for your content. For example,
+tags="test,page1,page2", would display the titles and descriptions of pages you have tagged with test, page1 and
+page2.
+
+  
+  
