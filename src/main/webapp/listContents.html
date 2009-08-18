@@ -1,0 +1,27 @@
+<lift:surround with="default" at="content">
+   <h3>Site Contents</h3>
+    <div id="entryform">
+      <table>
+        <tr>
+	        <th>Title</th>
+	        <th>Last Updated</th>
+	        <th>Tags</th>		        
+        </tr>
+        <lift:ManageContents.manage>
+        <content:entry>
+	      <tr>
+	        <td><content:title /></td>
+	        <td><content:lastupdated /></td>
+	        <td><content:tags /></td>
+	        <td><content:actions /></td>
+	      </tr>
+        </content:entry>
+        </lift:ManageContents.manage>
+      </table>
+      </div>
+    <br />
+    
+    <lift:ManageContents.addNew/>
+  
+
+</lift:surround>

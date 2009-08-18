@@ -1,0 +1,28 @@
+<lift:surround with="default" at="content">
+ 
+  <lift:ManageContents.edit form="POST"> 
+   <h3><content:header/></h3>   
+   <div id="entryform">
+    <table class="tablesorter">
+      <tr>
+        <td><content:id />Title</td><td><content:title/></td>
+      </tr>
+      <tr>
+        <td>Page name</td><td><content:link/></td>
+      </tr>
+      <tr>
+        <td>Description</td><td><content:description /></td>
+      </tr> 
+      <tr>
+        <td>Page detail</td><td><content:detail /></td>
+      </tr>        
+      <tr>
+        <td>tags</td><td><content:tags /></td>
+      </tr>
+      <tr>
+        <td><content:save /></td><td></td>
+      </tr>    
+    </table>
+    </div>    
+  </lift:ManageContents.edit>
+</lift:surround>
