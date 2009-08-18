@@ -11,6 +11,7 @@ import _root_.java.sql.{Connection, DriverManager}
 import _root_.net.liftweb.democritus.model._
 import _root_.javax.servlet.http.{HttpServletRequest}
 import net.liftweb.democritus.snippet._
+import net.liftweb.democritus.api._
 
 /**
   * A class that's instantiated early and run.  It allows the application
@@ -22,7 +23,7 @@ class Boot {
       DB.defineConnectionManager(DefaultConnectionIdentifier, DBVendor)
 
     // where to search snippet
-    LiftRules.addToPackages("net.liftweb.scala.democritus")
+    LiftRules.addToPackages("net.liftweb.democritus")
     Schemifier.schemify(true, Log.infoF _, User, Content, ContentTag, Tag, ContentAdmin)
 
     // Build SiteMap
@@ -43,7 +44,9 @@ class Boot {
 
     LiftRules.early.append(makeUtf8)
     
-    LiftRules.rewrite.append(rewrite)
+    LiftRules.dispatch.prepend(RestAPI.dispatch)
+    
+    LiftRules.rewrite.append(rewriteContent)
 
     LiftRules.loggedInTest = Full(() => User.loggedIn_?)
     
@@ -60,7 +63,7 @@ class Boot {
  private def makeUtf8(req: HTTPRequest): Unit =
 {req.setCharacterEncoding("UTF-8")} 
  
- def rewrite:LiftRules.RewritePF = {
+ def rewriteContent:LiftRules.RewritePF = {
    case RewriteRequest(
     		ParsePath(List("contents",_),_,_,_),_,_) =>
     			RewriteResponse("content" :: Nil)
