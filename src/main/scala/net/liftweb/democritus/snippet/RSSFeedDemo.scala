@@ -18,18 +18,14 @@ object RSSFeedDemo {
   def localFeed(tags:String):NodeSeq = {
     //val feed = RestAPI.listContentsAtom.out
     val feed = RestAPI.listContentByTagsAtom(tags).out
-               
+             
     var src = new Queue[Node]()
           
     for (c <- findElems(feed){_.label == "entry"}) {
         val id = {(c \\ "id")}
         val links = for(t <-(c \\ "tag")) yield(t.text)
-        val link= S.hostName match {
-          case "localhost" => "/contents/?tags=" + links.mkString(",") + "&id=" + id.text
-          case _ => "http://" + S.hostName + ":8080/democritus/contents/?tags=" + links.mkString(",") + "&id=" + id.text
-          
-        }
-        
+        val link = 
+          "http://" + S.hostName + ":8080" + S.contextPath + "/contents/?tags=" + links.mkString(",") + "&id=" + id.text
         src += <li class="rsswidgetitem"><a href={link}>{(c \\ "entry" \\ "title").text}</a><br/>{(c \\ "summary").text}</li>
     }
     
@@ -80,11 +76,8 @@ class RSSFeedDemo {
     
   
   def addAtomLinks(xhtml:NodeSeq):NodeSeq = {
-	    val linkURL = S.hostName match {
-	      case "localhost" => "http://" + S.hostName +":8080/api/content/atom"
-          case _ => "http://" + S.hostName +":8080/democritus/api/content/atom"
-        }
-     
+	    val linkURL = "http://" + S.hostName +":8080" + S.contextPath + "/api/content/atom"
+        
 	    <head>
 	    <link rel="alternate" type="application/atom+xml" 
 	    	title="Democritus CMS in English" hreflang="en-US"

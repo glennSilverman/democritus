@@ -120,10 +120,9 @@ class Content extends LongKeyedMapper[Content] with IdPK {
   def toAtom = { 
    
     val id = this.id
-    val linkURL = S.hostName match {
-      case "localhost" => "http://" + S.hostName +":8080/contents/?tags=" + tags.map(_.name.is).mkString(",") + "&id=" + id
-      case _ => "http://" + S.hostName +":8080/democritus/contents/?tags=" + tags.map(_.name.is).mkString(",") + "&id=" + id
-      }
+    val linkURL =
+       "http://" + S.hostName +":8080" + S.contextPath + "/contents/?tags=" + tags.map(_.name.is).mkString(",") + "&id=" + id
+     
     val _author = User.findAll(By(User.id, author.is)).head
     
     <entry>

@@ -29,7 +29,7 @@ object RestAPI extends XMLApiHelper {
    
    def feedWrapper(eList:List[NodeSeq]) = {
      val host = "http://" + S.hostName  
-     val link = host + ":8080/api/content/atom"     
+     val link = host + ":8080" + S.contextPath + "/api/content/atom"     
      val updated = Content.mostRecentContent match {
          case Full(c) => formatDate(c.lastUpdated.is, rfcDate.format) open_!
          case _ => formatDate(new Date(), rfcDate.format) open_!
