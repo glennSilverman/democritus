@@ -9,7 +9,7 @@ The system uses wymeditor for content creation and also supports
 nested superfish menus which can be linked to content via rewriteRequests.
 
 The content can also be fed to third-party RSS readers, such as
-Google Blogger and WebPress.
+Google Blogger and WordPress.
 
 Under development, but not yet included, is role-based authorization
 for managing content and dynamic menu creation.
