@@ -17,6 +17,7 @@ for managing content and dynamic menu creation.
 
 Set up and useage:
 
+The program is best packaged with Maven 2.
 You can use derby for your database if you must, but the program is configured for mysql, so you will
 need to have a running instance of mysql. The pom includes the mysql jdbc driver as a dependency. 
 
@@ -34,6 +35,9 @@ edit data_dev in src/main/resources/democritus.properties to use that directory.
 eg: data_dev=C:/democritus_data/
 
 This is where your content pages will be stored.
+
+Then, cd to the directory where you extracted this download and run: mvn package.
+Upload target/democritus-<version>.war to your favorite Java servlet container, Tomcat or Jersey. 
 
 Create a user and go to the List Contents menu to start adding and editing 
 content. Make sure to complete the page and tag entries. Do not include an extension
