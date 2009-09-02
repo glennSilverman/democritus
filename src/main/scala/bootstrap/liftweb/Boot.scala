@@ -12,6 +12,7 @@ import _root_.net.liftweb.democritus.model._
 import _root_.javax.servlet.http.{HttpServletRequest}
 import net.liftweb.democritus.snippet._
 import net.liftweb.democritus.api._
+import _root_.net.liftweb.mapper.view._
 
 /**
   * A class that's instantiated early and run.  It allows the application
@@ -24,8 +25,9 @@ class Boot {
 
     // where to search snippet
     LiftRules.addToPackages("net.liftweb.democritus")
+    //Schemifier.schemify(true, Log.infoF _, User, Content, ContentTag, Tag, ContentAdmin)
     Schemifier.schemify(true, Log.infoF _, User, Content, ContentTag, Tag, ContentAdmin)
-
+    
     // Build SiteMap
     val entries = Menu(Loc("Home", List("index"), "Home")) :: User.sitemap ::: Content.menus
     LiftRules.setSiteMap(SiteMap(entries:_*))
@@ -53,6 +55,9 @@ class Boot {
     LiftRules.resourceNames = "democritus" :: Nil
     
     JQueryUI.init
+    
+    UserWithRoles.init
+
 
     S.addAround(DB.buildLoanWrapper)
   }

@@ -30,7 +30,7 @@ object Content extends Content with LongKeyedMetaMapper[Content] {
  
   
   def listMenu = Menu(Loc("listContents", List("listContents"), "List Contents",
-          LocGroup("admin")))
+          LocGroup("admin"), If(() => User.isa_?("admin"), S.?("not_authorized"))))
   
   def createMenu = Menu(Loc("createContents", List("editContent"), "Create Contents", Hidden, LocGroup("admin1")))
   
@@ -74,7 +74,10 @@ class Content extends LongKeyedMapper[Content] with IdPK {
  
   object description extends MappedTextarea(this, 255) {
       override def displayName = "Description" 
-      override def _toForm = super._toForm.map(_.flatMap(addElemClass(_,"style","height: 65px; width:360px")))
+      override def _toForm = super._toForm match {
+        case Full(e) => addElemClass(e,"style","height: 65px; width:360px")
+        case Empty => Empty
+        }
   }
   
   object link extends MappedString(this, 100){

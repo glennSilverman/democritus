@@ -56,9 +56,9 @@ object Utilities {
     S.param(name).map(parseDate(_, converter)) openOr Empty
   }
   
-  def addElemClass(in: Node, name:String, value:String): NodeSeq = in match {      
-      	case e: Elem => e % new UnprefixedAttribute(name, Text(value), Null)
-        case _ => NodeSeq.Empty
+  def addElemClass(in: Node, name:String, value:String): Box[Elem] = in match {      
+      	case e: Elem => Full(e % new UnprefixedAttribute(name, Text(value), Null))
+        case _ => Empty
       }
   
   def dataDir = S.hostName match {
