@@ -39,9 +39,10 @@ This is where your content pages will be stored.
 Then, cd to the directory where you extracted this download and run: mvn package.
 Upload target/democritus-<version>.war to your favorite Java servlet container, Tomcat or Jersey. 
 
-Create a user and go to the List Contents menu to start adding and editing 
-content. Make sure to complete the page and tag entries. Do not include an extension
-on your page entry. All pages have an html extension by default.
+Only users with role of "admin" can edit content and create and edit user roles. At startup, a default
+admin user is created for you. Log in as user: admin@test.com, password: "admin" and go to the List Contents
+menu to start adding and editing content. Make sure to complete the page and tag entries. Do not include an
+extension on your page entry. All pages have an html extension by default.
 
 To view your content on the home page, edit the tags attribute in <lift:ManageContents.feed tags="test"/> in index.html
 to include a comma-separated list of tags that you have created for your content. For example,
