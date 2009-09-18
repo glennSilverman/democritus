@@ -40,7 +40,8 @@ class ManageContents {
     User.currentUser.map({user =>
         Content.findAll.flatMap({c =>
             bind("content", chooseTemplate("content", "entry", xhtml),
-                 "title" -> Text(c.title.is),                 
+                 "title" -> Text(c.title.is),
+                 "type" -> Text(c.contentType.fromInt(c.contentType.toInt).toString),  
                  "lastupdated" -> Text(c.lastUpdated.is.toString),
                  "tags" -> c.showTags,
                  "actions" -> { link("/listContents", () => deleteContent(c), Text("Delete")) ++ Text(" ") ++
@@ -70,19 +71,24 @@ class ManageContents {
     }
 
     
-    def doSave () = {            
-      currentContent.validate match {
-        case Nil =>
-          currentContent.author(User.currentUser.open_!)
-          Content.delTags(currentContent)
-          currentContent.tags(tags)
-          currentContent.lastUpdated(new Date)
-          currentContent.save
-          Content.addTags(currentContent)
-          writeHtml(currentContent.link.is, page.is)
-          redirectTo("/listContents")
-        case x => error(x)
-      }
+    def doSave () = { 
+      isValidElem(page.is) match {
+        case true => {
+	        currentContent.validate match {
+		        case Nil =>
+		          currentContent.author(User.currentUser.open_!)
+		          Content.delTags(currentContent)
+		          currentContent.tags(tags)
+		          currentContent.lastUpdated(new Date)
+		          currentContent.save
+		          Content.addTags(currentContent)
+		          writeHtml(currentContent.link.is, page.is)
+		          redirectTo("/listContents")
+		        case x => error(x)
+	        }
+         }
+         case false => error("Not valid xhtml")
+       }
     } 
 
     val content = currentContent
@@ -91,7 +97,7 @@ class ManageContents {
       case -1 => "Add new Content"
       case _ => "Edit Content"
     } 
-    println("Loading html for test = " + loadHtml(currentContent.link.is).toString)
+    
     
     bind("content", xhtml,
          "header" -> Text(header),    
@@ -99,6 +105,7 @@ class ManageContents {
          "title" -> text(currentContent.title.is, currentContent.title(_), ("size","60")),
          "link" -> text(currentContent.link.is, currentContent.link(_)),
          "description" -> textarea(currentContent.description.is, currentContent.description(_)),
+         "type" -> currentContent.contentType.toForm,
          "detail" -> textarea(loadHtml(currentContent.link.is).toString, page(_), ("class", "wymeditor")),
          "tags" -> text(tags, doTagsAndSubmit),
          "save" -> submit("Save", doSave, ("class", "wymupdate")))
@@ -107,9 +114,18 @@ class ManageContents {
   def loadLink(page:String):Elem = page match {
       case null => null
       case x => new File(dataDir + x + ".html").exists match {
-        case true => XML.loadFile(dataDir + x + ".html")
+        case true => 
+          try{
+        	  XML.loadFile(dataDir + x + ".html")
+           }catch {
+      
+           		case e => {
+                    
+           			<span></span>
+           		}
+           }
         case false => <span></span>
-        }
+      }
   }
   
   def showContents(xhtml:NodeSeq):NodeSeq ={
@@ -163,9 +179,13 @@ class ManageContents {
   def feed(xhtml:NodeSeq):NodeSeq = {
     S.attr("url") match {
       case Full(url) => RSSFeedDemo(url)    
-      case Empty => RSSFeedDemo.localFeed(S.attr("tags") openOr "")   
-      case _ => NodeSeq.Empty
-    }    
+      case Empty => RSSFeedDemo.localFeed(S.attr("tags") openOr "", S.attr("showDetail") match {
+        case Full(_) => true
+        case Empty => false
+        case Failure(_, _, _) => false                             
+      	})
+      case Failure(_,_,__) => NodeSeq.Empty
+    }     
    
   }
 }

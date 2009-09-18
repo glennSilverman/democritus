@@ -94,7 +94,32 @@ object User extends User with MetaMegaProtoUser[User] {
        editUserMenuLoc, changePasswordMenuLoc,listUsersMenuLoc,editUserRolesMenuLoc,
        validateUserMenuLoc).flatten(a => a)
  
- def isa_?(role:String) = User.currentUser.map(_.isa(role)).openOr(false) 
+ def isa_?(role:String) = User.currentUser.map(_.isa(role)).openOr(false)
+
+ /*
+ def authorize(roleName:String): Box[_root_.net.liftweb.http.auth.Role] = {
+      object userRoles extends RequestVar[_root_.net.liftweb.http.auth.Role](null)
+      
+       val credentials : (String,String) = User.currentUser match {
+       		case Full(u) => (u.email.is, u.password.is)
+       		case Empty => (null, null)
+      }
+       
+      User.isa_?(roleName) match {
+        case true => {          
+            LiftRules.authentication = _root_.net.liftweb.http.auth.HttpBasicAuthentication("lift") {
+            	case (credentials._1, credentials._2, req) =>
+            		
+            		userRoles(_root_.net.liftweb.http.auth.AuthRole(roleName))
+            		true
+            }
+            Full(new _root_.net.liftweb.http.auth.Role{
+            		def name = roleName})
+            }
+      case false => Empty
+    }
+ }
+*/                                                                         
  
 }
 
@@ -103,6 +128,7 @@ object User extends User with MetaMegaProtoUser[User] {
  */
 class User extends MegaProtoUser[User] with ManyToMany{
   def getSingleton = User // what's the "meta" server
+ 
 
   // define an additional field for a personal essay
   object textArea extends MappedTextarea(this, 2048) {
@@ -119,5 +145,6 @@ class User extends MegaProtoUser[User] with ManyToMany{
          Role.findAll.map( x => (x.id.is.toString, x.name.is)))
       
     
-  def isa(role:String) = roles.map(_.name.is).exists(s => s == role) 
+  def isa(role:String) = roles.map(_.name.is).exists(s => s == role)
+    
 }

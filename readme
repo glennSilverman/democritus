@@ -9,29 +9,18 @@ is clicked.
 The system uses wymeditor for content creation and also supports
 nested superfish menus which can be linked to content via rewriteRequests.
 
-The content can also be fed to third-party RSS readers, such as
-Google Blogger and WordPress.
+Content you create can also be published as ATOM feeds.
 
 Set up and useage:
 
-The program is best packaged with Maven 2.
-You can use derby for your database if you must, but the program is configured for mysql, so you will
-need to have a running instance of mysql. The pom includes the mysql jdbc driver as a dependency. 
-
-Create a database schema (the default is lift_democritus) to store the
-Lift mapper entities and configure for your mysql username and password, like so, 
-
-val dbUrl: String = Props.get("db.url") openOr
-    "jdbc:mysql://localhost:3306/lift_democritus?user=<username>&password=<password>"
-    
-in Boot.scala.
+The program is best packaged, compiled and run with Maven 2.
 
 To run, simply create a directory on your local drive, and
 edit data_dev in src/main/resources/democritus.properties to use that directory.
 
 eg: data_dev=C:/democritus_data/
 
-This is where your content pages will be stored.
+This is where your content pages will be stored. Don't forget the "/" at the end.
 
 Then, cd to the directory where you extracted this download and run: mvn package.
 Upload target/democritus-<version>.war to your favorite Java servlet container, Tomcat or Jersey. 

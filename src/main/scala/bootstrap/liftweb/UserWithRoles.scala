@@ -22,26 +22,48 @@ object UserWithRoles {
       case _ => LiftRules.setSiteMap(SiteMap(Role.menus:_*))
     }
     
-    if(UserRole.findUserRoles("admin").isEmpty){
-            
-    		val role:Role = Role.findAll(By(Role.name, "admin")) match {
-    		  case Nil => {
-    			  val r = Role.create.name("admin")
-                  r.save
-    		  	  r
-                }
-    		  case x => x.head
-            }
-            
-            Log.info("New role, " + role.name.is + ", created")
-            val user = User.create.firstName("admin").lastName("admin") 
-		    .locale("en_US").timezone("American/Los Angeles").email("admin@test.com").password("admin")
-            user.save
-            user.validated(true)
-            user.roles += role
-		    user.save	    	    
-		 }
-         else Log.info("Admin role already exits...")
+    //Check if user with admin role exists. Create if none exists
+    if(UserRole.findUserRoles("admin").isEmpty ){    
+      
+	    //Add admin role if none exists  
+	    val role:Role =	Role.findAll(By(Role.name, "admin")) match {
+	    	 case Nil => {
+	    		  val r = Role.create.name("admin")
+	              r.save
+	              Log.info("Admin role created")
+	    	  	  r
+	          }
+	    	  case x => {
+	    	    Log.info("Admin role already exists")
+	    	    x.head
+	    	  }
+	       }
+	    
+	      
+    
+          //Create Admin user if none exists
+	      val user:User = User.findAll(By(User.email, "admin@test.com")) match {
+	          case Nil => {
+	        	  val u = User.create.firstName("admin").lastName("admin") 
+	        	  	.locale("en_US").timezone("American/Los Angeles").email("admin@test.com").password("admin")
+	        	  	u.save
+	        	  	u.validated(true)
+	                Log.info("New admin user created")
+	                u
+	             }
+	        	 case u => {
+	        	   Log.info("Admin user already exists")
+	        	   u.head
+                 }
+	      }
+	           
+	      //Assign admin role to admin user      
+	      user.roles += role
+	      user.save
+	      Log.info("Admin role added to admin user")
+	            
+	}
+         
     
     Log.info("UserWithRoles initialized")
   }

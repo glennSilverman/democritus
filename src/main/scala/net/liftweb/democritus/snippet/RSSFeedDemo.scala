@@ -15,7 +15,7 @@ object RSSFeedDemo {
  
   def apply(feedUrl: String) = new RSSFeedDemo().render(feedUrl)
   
-  def localFeed(tags:String):NodeSeq = {
+  def localFeed(tags:String, showDetail:Boolean):NodeSeq = {
     //val feed = RestAPI.listContentsAtom.out
     val feed = RestAPI.listContentByTagsAtom(tags).out
              
@@ -26,11 +26,19 @@ object RSSFeedDemo {
         val links = for(t <-(c \\ "tag")) yield(t.text)
         val link = 
           "http://" + S.hostName + ":8080" + S.contextPath + "/contents/?tags=" + links.mkString(",") + "&id=" + id.text
-        src += <li class="rsswidgetitem"><a href={link}>{(c \\ "entry" \\ "title").text}</a><br/>{(c \\ "summary").text}</li>
+        
+        val title =  showDetail match {
+            case true => {(c \\ "entry" \\ "title").text}
+            case false => <a href={link}>{(c \\ "entry" \\ "title").text}</a>
+        }
+        
+        src+= <li class="rsswidgetitem">{title}<h5>{(c \\ "summary").text}</h5></li>
+       
+        
     }
     
     
-    <div class="rsswidget"><ul>{src}</ul></div>
+    <div class="rsswidget"><ul class="xoxo">{src}</ul></div>
   }  
   
 }

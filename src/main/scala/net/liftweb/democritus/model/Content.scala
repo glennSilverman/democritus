@@ -5,12 +5,13 @@ import _root_.net.liftweb.util._
 import _root_.net.liftweb.sitemap._
 import _root_.net.liftweb.sitemap.Loc._
 import _root_.net.liftweb.http._
+import auth.{AuthRole}
 import java.util.Date
 import _root_.scala.xml._
 import Helpers._
 import utils.Utilities._
 
-object Content extends Content with LongKeyedMetaMapper[Content] {  
+ object Content extends Content with LongKeyedMetaMapper[Content] {  
   override def fieldOrder = List(title, link, description)
   
   def findByName (author : User, name : String) : List[Content] = 
@@ -30,7 +31,9 @@ object Content extends Content with LongKeyedMetaMapper[Content] {
  
   
   def listMenu = Menu(Loc("listContents", List("listContents"), "List Contents",
-          LocGroup("admin"), If(() => User.isa_?("admin"), S.?("not_authorized"))))
+          LocGroup("admin"), If(() => User.isa_?("admin"), S.?("not_authorized"))
+  		   /*HttpAuthProtected(() => Full(AuthRole("admin"))*/))
+  
   
   def createMenu = Menu(Loc("createContents", List("editContent"), "Create Contents", Hidden, LocGroup("admin1")))
   
@@ -69,7 +72,10 @@ class Content extends LongKeyedMapper[Content] with IdPK {
   object lastUpdated extends MappedDateTime(this)
  
   object title extends MappedString(this, 100){
-    override def displayName = "Title"
+    override def displayName = "Title"   
+   
+    override def validations =  valMinLen(1, S.??("Title must not be empty")) _ :: super.validations  
+    
   } 
  
   object description extends MappedTextarea(this, 255) {
@@ -77,18 +83,26 @@ class Content extends LongKeyedMapper[Content] with IdPK {
       override def _toForm = super._toForm match {
         case Full(e) => addElemClass(e,"style","height: 65px; width:360px")
         case Empty => Empty
+        case Failure(_, _, _) => Empty 
         }
+      
+      override def validations =  valMinLen(1, S.??("Description must not be empty")) _ :: super.validations  
   }
   
   object link extends MappedString(this, 100){
     override def displayName = "Page link"
+    override def validations =  valMinLen(1, S.??("Page must not be empty")) _ :: super.validations  
   }
   
-  /*object detail extends MappedTextarea(this, 1048) {
-    override def displayName = "Detail"
-    override def _toForm = super._toForm.map(_.flatMap(addElemClass(_,"class","wymeditor")))
+  object types extends Enumeration {
+    val Xhtml = Value("Xhtml")
+    val File = Value("File")
+    val Form = Value("Form")
   }
-  */
+  
+  object contentType extends MappedEnum(this, types){
+    override def displayName = "Type"
+  }
   
   private object _dbTags extends HasManyThrough(this, Tag, ContentTag, ContentTag.content, ContentTag.tag)
   
@@ -140,7 +154,7 @@ class Content extends LongKeyedMapper[Content] with IdPK {
     </entry>
     
   } 
-  
+    
   override def equals (other : Any) = other match {
     case e:Content if e.id.is == this.id.is => true
     case _ => false

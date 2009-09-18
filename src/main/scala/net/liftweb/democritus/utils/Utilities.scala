@@ -73,6 +73,7 @@ object Utilities {
      }
 
   private def loadFile(filePath:String) = {
+    
     val file = new File(filePath);
     var src = new ListBuffer[String]()
     
@@ -97,7 +98,7 @@ object Utilities {
       dis.close();      
 
     } catch {
-      case e => e.printStackTrace();
+      case e => 
     }
     
     src
@@ -107,7 +108,6 @@ object Utilities {
   def writeHtml(link:String, contents:String) = link match {
       case "" => ""
       case _ => writeFile(new File(dataDir + link + ".html"), contents)
-      
      }
   
   private def writeFile(aFile:File, contents:String) = {
@@ -121,5 +121,23 @@ object Utilities {
       output.close();
     }
   }
+  
+  def isValidElem(in:String):Boolean = {
+    Log.info("Validating: " + in)
+    var temp = in
+    if(temp equals ""){ 
+      temp = "<span></span>"
+      true
+    }
+    
+    try {
+    	  XML.loadString(temp)
+          true
+        }catch {
+          case e => e.getMessage
+          false
+        }
+    }	
+  
 
 }

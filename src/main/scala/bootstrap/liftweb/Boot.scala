@@ -54,11 +54,9 @@ class Boot {
     
     LiftRules.resourceNames = "democritus" :: Nil
     
-    JQueryUI.init
-    
+    JQueryUI.init  
     UserWithRoles.init
-
-
+    
     S.addAround(DB.buildLoanWrapper)
   }
 
@@ -86,10 +84,12 @@ object DBVendor extends ConnectionManager {
 
   private def createOne: Box[Connection] = try {
      val driverName: String = Props.get("db.driver") openOr
-    "com.mysql.jdbc.Driver"
+    //"com.mysql.jdbc.Driver"
+    "org.apache.derby.jdbc.EmbeddedDriver"
 
     val dbUrl: String = Props.get("db.url") openOr
-    "jdbc:mysql://localhost:3306/lift_democritus?user=<username>&password=<password>"
+    //"jdbc:mysql://localhost:3306/lift_democritus?user=<username>&password>=monday"
+    "jdbc:derby:lift_democritus;create=true"
     
 
     Class.forName(driverName)
