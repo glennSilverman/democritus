@@ -108,7 +108,8 @@ class ManageContents {
          "type" -> currentContent.contentType.toForm,
          "detail" -> textarea(loadHtml(currentContent.link.is).toString, page(_), ("class", "wymeditor")),
          "tags" -> text(tags, doTagsAndSubmit),
-         "save" -> submit("Save", doSave, ("class", "wymupdate")))
+         "save" -> submit("Save", doSave, ("class", "wymupdate")),
+    	 "cancel" -> submit("Cancel", () => redirectTo("/listContents")))
   }
   
   def loadLink(page:String):Elem = page match {
