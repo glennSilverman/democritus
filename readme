@@ -22,8 +22,17 @@ eg: data_dev=C:/democritus_data/
 
 This is where your content pages will be stored. Don't forget the "/" at the end.
 
-Then, cd to the directory where you extracted this download and run: mvn package.
-Upload target/democritus-<version>.war to your favorite Java servlet container, Tomcat or Jersey. 
+Then, cd to the directory where you extracted this download and run: 
+
+	mvn jetty:run
+
+to build and launch in the embedded Jetty servlet container. 
+
+Or, if you prefer Tomcat, run:
+
+	mvn package
+
+and then upload target/democritus-<version>.war to your Tomcat webapp directory.
 
 Only users with role of "admin" can edit content and create and edit user roles. At startup, a default
 admin user is created for you. Log in as user: admin@test.com, password: "admin" and go to the List Contents
