@@ -118,7 +118,7 @@ class Content extends LongKeyedMapper[Content] with IdPK {
   }
   
   def tags(newTags:String) = locker.synchronized {
-    _tags = newTags.roboSplit(",").map(Tag.byName(_))
+    _tags = newTags.roboSplit(",").map(Tag.byItemName(_))
     this
   }
   
@@ -129,16 +129,16 @@ class Content extends LongKeyedMapper[Content] with IdPK {
   
   def tagsToo:List[Tag] = ContentTag.findAll(By(ContentTag.content, this.id)).map(_.tag.obj.open_!)
   
-  def showTags = Text(tags.map(_.name.is).mkString(", "))
+  def showTags = Text(tags.map(_.itemName.is).mkString(", "))
   
    // get a list of tags of the form <tag>tagname1</tag><tag>tagname2</tag>
-   def showXMLTags: NodeSeq = tags.map(t => <ex:tag>{t.name.is}</ex:tag>)
+   def showXMLTags: NodeSeq = tags.map(t => <ex:tag>{t.itemName.is}</ex:tag>)
   
   def toAtom = { 
    
     val id = this.id
     val linkURL =
-       "http://" + S.hostName +":8080" + S.contextPath + "/contents/?tags=" + tags.map(_.name.is).mkString(",") + "&id=" + id
+       "http://" + S.hostName +":8080" + S.contextPath + "/contents/?tags=" + tags.map(_.itemName.is).mkString(",") + "&id=" + id
      
     val _author = User.findAll(By(User.id, author.is)).head
     

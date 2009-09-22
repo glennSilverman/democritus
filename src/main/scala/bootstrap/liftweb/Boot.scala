@@ -13,6 +13,7 @@ import _root_.javax.servlet.http.{HttpServletRequest}
 import net.liftweb.democritus.snippet._
 import net.liftweb.democritus.api._
 import _root_.net.liftweb.mapper.view._
+import _root_.net.liftweb.widgets.menu._
 
 /**
   * A class that's instantiated early and run.  It allows the application
@@ -54,6 +55,7 @@ class Boot {
     
     LiftRules.resourceNames = "democritus" :: Nil
     
+    MenuWidget.init
     JQueryUI.init  
     UserWithRoles.init
     
@@ -88,7 +90,7 @@ object DBVendor extends ConnectionManager {
     "org.apache.derby.jdbc.EmbeddedDriver"
 
     val dbUrl: String = Props.get("db.url") openOr
-    //"jdbc:mysql://localhost:3306/lift_democritus?user=<username>&password>=monday"
+    //"jdbc:mysql://localhost:3306/lift_democritus?user=<username>&password=<password>"
     "jdbc:derby:lift_democritus;create=true"
     
 

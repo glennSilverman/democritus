@@ -17,7 +17,7 @@ object ContentTag extends ContentTag with LongKeyedMetaMapper[ContentTag] {
   def findTagContents (search : String) : List[Content] = 
     findAll(In(ContentTag.tag,
 	       Tag.id,
-	       Like(Tag.name, search))).map(_.content.obj.open_!).removeDuplicates
+	       Like(Tag.itemName, search))).map(_.content.obj.open_!).removeDuplicates
   
   def findAll(e:Content):List[ContentTag] = findAll(By(ContentTag.content, e))
 }

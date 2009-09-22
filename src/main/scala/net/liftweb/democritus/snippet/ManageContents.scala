@@ -60,7 +60,7 @@ class ManageContents {
   object page extends RequestVar[String]("")
   
   def edit (xhtml : NodeSeq) : NodeSeq = {
-    var tags = currentContent.tags.map(_.name.is).mkString(", ")
+    var tags = currentContent.tags.map(_.itemName.is).mkString(", ")
     
     def doTagsAndSubmit(t:String){
        tags = t

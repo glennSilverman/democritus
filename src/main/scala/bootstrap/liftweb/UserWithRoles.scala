@@ -15,10 +15,10 @@ object UserWithRoles {
 	
   def init = {
     LiftRules.addToPackages("net.liftweb.usermon")
-    Schemifier.schemify(true, Log.infoF _, Role, UserRole)
+    Schemifier.schemify(true, Log.infoF _, Role, UserRole, MenutreeItem)
     
     val sitemap = LiftRules.siteMap match {
-      case Full(sm) => LiftRules.setSiteMap(SiteMap(sm.menus ::: Role.menus:_* )) 
+      case Full(sm) => LiftRules.setSiteMap(SiteMap(sm.menus ::: Role.menus ::: MenutreeItem.menus:_* )) 
       case _ => LiftRules.setSiteMap(SiteMap(Role.menus:_*))
     }
     

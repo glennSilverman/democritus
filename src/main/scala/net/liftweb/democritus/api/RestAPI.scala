@@ -78,7 +78,7 @@ object RestAPI extends XMLApiHelper {
         def contents(tag:String) =
 	      	  ContentTag.findAll(
 	    			  In(ContentTag.tag, Tag.id,
-	    					 Like(Tag.name, tag))).map(_.content.obj.open_!).removeDuplicates
+	    					 Like(Tag.itemName, tag))).map(_.content.obj.open_!).removeDuplicates
         
         def allContents = for(t <- _tags)  yield{contents(t).map(_.toAtom)} 
         
