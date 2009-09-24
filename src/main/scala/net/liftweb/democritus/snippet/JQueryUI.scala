@@ -50,9 +50,25 @@ object JQueryUI extends JQueryUI{
       case "superfish" :: _ => true      
       case "ui" :: _ => true 
       case "wymeditor" :: _ => true
+      case "treeTable" :: _ => true
     })     
   }   
   
+}
+
+object JQueryTreeTable {
+  def apply(id: String):NodeSeq =    
+    <head>
+  <link rel="stylesheet" href={"/" + LiftRules.resourceServerPath + "/treeTable/jquery.treeTable.css"} type="text/css"/>
+  <script type="text/javascript" src={"/" + LiftRules.resourceServerPath + "/treeTable/jquery.treeTable.min.js"}/>
+    <script type="text/javascript" charset="utf-8">{
+         OnLoad(JqId(id) >> new JsExp with JQueryRight {
+           def toJsCmd = "treeTable(" + ")"
+         }) toJsCmd
+       }
+       </script>
+    </head>
+
 }
 
 object JqContainer {
@@ -173,6 +189,9 @@ class JQueryUI extends DocumentReady {
          """)
        }
       </script>    
-   </head>      
+   </head> 
+   
+   
+ 
   
 }

@@ -5,46 +5,79 @@ import _root_.net.liftweb.util._
 import _root_.net.liftweb.sitemap._
 import _root_.net.liftweb.sitemap.Loc._
 import _root_.net.liftweb.http._
-import _root_.net.liftweb.http._
+import js._
+import js.JsCmds._
+import js.jquery._
+import JE._
+import JqJsCmds._
+import JqJE._
 import SHtml._
 import java.util.Date
 import _root_.scala.xml._
 import Helpers._
 import _root_.scala.collection.mutable._
 import S._
-import js.JsCmds._
+import net.liftweb.democritus.snippet._
+
 
 trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMapper[Long, ModelType] {
   self: ModelType =>   
   
-  lazy val Prefix = calcPrefix  
+  lazy val Prefix = calcPrefix
+  lazy val MenuName_List = "List" + Prefix
+  lazy val MenuName_Add = "Add" + Prefix
+  lazy val MenuName_ListView = "Listview" + Prefix
+  lazy val MenuName_TreeView = "Treeview" + Prefix
+  lazy val MenuTitle_Add = "Add " + Prefix.head
+  
   def calcPrefix = List(dbTableName)  
   
   def isAuthorized():Boolean
     
   def listTreeItemsMenu = 
-    Menu(Loc("List" + Prefix, "list" + Prefix :: Nil,  "List " + dbTableName + "s",                  
+    Menu(Loc(MenuName_List, "list" + Prefix :: Nil,  "List " + dbTableName + "s",                  
                   listItems, listSnippets, If(/*() => User.isa_?("admin")*/ isAuthorized, S.?("not_authorized")))) 
   
-  def addTreeItemMenu = 
-	 Menu(Loc("Add" + Prefix, "add" + Prefix :: Nil, "Add  " + Prefix, listItems, Hidden))
+  def buildListViewMenu = 
+    Menu(Loc(MenuName_ListView, "list" + Prefix :: Nil,  "List View",                  
+                  listItems, listSnippets, If(/*() => User.isa_?("admin")*/ isAuthorized, S.?("not_authorized")),
+    	 Hidden)) 
   
-  def menus:List[Menu] = listTreeItemsMenu :: Nil
+  def buildTreeViewMenu = 
+	 Menu(Loc(MenuName_TreeView, "tree" + Prefix :: Nil, "Tree View",
+			      treeItems, treeSnippets, If(/*() => User.isa_?("admin")*/ isAuthorized, S.?("not_authorized")),
+         Hidden))
   
-  lazy val listSnippets = new DispatchLocSnippets {
+  def menus:List[Menu] = listTreeItemsMenu :: buildListViewMenu :: buildTreeViewMenu :: Nil
+  
+  val listSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
       case "items.addNew" => addNew(create, S.??("Created"))
       case "items.list" => list
+      
     }
   }
+  
+  val treeSnippets = new DispatchLocSnippets {
+    val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
+      case "items.buildTree" => buildTree
+      case "items.addNew" => addNew(create, S.??("Created"))
+      case "items.tree" => tree
+      
+    }
+  }
+  
+  def buildTree(in:NodeSeq):NodeSeq = 
+    JQueryTreeTable("tree")
     
-  def addNew(item: ModelType, noticeMsg: String)(xhtml:NodeSeq):NodeSeq =  
-	    bind("item", xhtml, 
+  def addNew(item: ModelType, noticeMsg: String)(xhtml:NodeSeq):NodeSeq = 
+    bind("item", xhtml, 
 	       	"addNew" -> {SHtml.a({ ()=> 
 	       	  SetHtml("item-save", edit(item))},
-              Text("Create") 
+              Text(MenuTitle_Add) 
 	       	  )}
 	         ) 
+  
       
   def edit(item: ModelType) =        
       <form>
@@ -55,7 +88,8 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
          item.delete_!
        }
   
-  def list(ns: NodeSeq): NodeSeq =  User.currentUser.map({user => 
+  def list(ns: NodeSeq): NodeSeq =     
+     User.currentUser.map({user => 
        findAll.flatMap({e => 
             bind("item", chooseTemplate("item", "entry", ns),
                  "name" -> Text(e.itemName.is),
@@ -65,21 +99,43 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
                                  SetHtml("item-save", edit(e))}, Text("Edit")) }
                 )
           })
-			}) openOr Text("You're not logged in")
+			}) openOr Text("You're not logged in")  
   
+   def tree(ns: NodeSeq): NodeSeq =     
+          User.currentUser.map({user => 
+       findAll.flatMap({e => 
+            bind("item", chooseTemplate("item", "entry", ns),
+                 "node" -> createNode(e)
+                )
+          })
+			}) openOr Text("You're not logged in") 
+  
+  
+  def createNode(item:ModelType):NodeSeq = {
+         val node = dbTableName.toLowerCase + "-" + item.id.toString
+         val parent = dbTableName.toLowerCase + "-" + item.parentId.toString
+         
+         item.parentId match {
+           case -1 => <tr id={node}><td>{Text(item.itemName.is)}</td></tr>  
+           case _ => <tr id={node} class={"child-of-" + parent}><td>{Text(item.itemName.is)}</td></tr>  
+         }
+        	
+  }          
+ 
   
   def listItems = Template({ () =>
   <lift:surround with="default" at="content">
    <h3>{dbTableName + "s"}</h3>
-    <div id="entryform">      
+    <div id="entryform"> 
+      <lift:Menu.item name={MenuName_TreeView}/>           
       <table>
         <tr>
 	        <th>{dbTableName + " name"}</th>
             <th>Parent</th>
 	        <th>
-                <lift:items.addNew>        
-	        	   <item:addNew/>
-	        	</lift:items.addNew>	        	
+                <lift:items.addNew>
+                   <item:addNew/>
+                </lift:items.addNew>
             </th>	        	        
         </tr>        
          <lift:items.list>
@@ -93,12 +149,44 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
           </lift:items.list>
 	  </table>
       </div>
+      
       <hr />      
       <div id="item-save"/>      
       
 </lift:surround>
   })
-
+  
+  def treeItems = Template({ () =>
+	  <lift:surround with="default" at="content">
+	   <lift:items.buildTree/> 
+	    <h3>{dbTableName + "s"}</h3>
+       <div id="entryform">  
+        <lift:Menu.item name={MenuName_ListView}/>
+        <table id="tree">
+        <thead>
+         <tr>
+	        <th>{dbTableName + " name"}</th>
+            <th>
+                <lift:items.addNew>
+                   <item:addNew/>
+                </lift:items.addNew>
+            </th>	        	        
+        </tr> 
+        </thead> 
+        <tbody>
+        <lift:items.tree>
+         	<item:entry>
+		      <item:node/>
+           </item:entry>           
+          </lift:items.tree>
+       </tbody>
+	  </table>
+     </div>
+      
+      <hr />      
+      <div id="item-save"/> 
+	  </lift:surround>
+	})
 }
 
 trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T]{

@@ -37,7 +37,7 @@ class ManageUsers extends ModelSnippet[User]{
                  "firstname" ->  Text(u.firstName.is),
                  "lastname" -> Text(u.lastName.is),
                  "email" -> Text(u.email.is),
-                 "roles" -> Text(u.roles.all.map(r=>r.name.is).mkString(", ")),
+                 "roles" -> Text(u.roles.all.map(r=>r.itemName.is).mkString(", ")),
                  v.editAction
                  
                  )

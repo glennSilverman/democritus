@@ -15,7 +15,7 @@ object UserRole extends UserRole with LongKeyedMetaMapper[UserRole] {
   def findUserRoles (search : String) : List[User] = 
     findAll(In(UserRole.role,
 	       Role.id,
-	       Like(Role.name, search))).map(_.user.obj.open_!).removeDuplicates
+	       Like(Role.itemName, search))).map(_.user.obj.open_!).removeDuplicates
   
 }
 

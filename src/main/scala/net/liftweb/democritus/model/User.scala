@@ -142,9 +142,9 @@ class User extends MegaProtoUser[User] with ManyToMany{
     
     def validSelectValues: Box[Seq[(String, String)]] = 
       Full(
-         Role.findAll.map( x => (x.id.is.toString, x.name.is)))
+         Role.findAll.map( x => (x.id.is.toString, x.itemName.is)))
       
     
-  def isa(role:String) = roles.map(_.name.is).exists(s => s == role)
+  def isa(role:String) = roles.map(_.itemName.is).exists(s => s == role)
     
 }

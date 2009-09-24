@@ -26,9 +26,9 @@ object UserWithRoles {
     if(UserRole.findUserRoles("admin").isEmpty ){    
       
 	    //Add admin role if none exists  
-	    val role:Role =	Role.findAll(By(Role.name, "admin")) match {
+	    val role:Role =	Role.findAll(By(Role.itemName, "admin")) match {
 	    	 case Nil => {
-	    		  val r = Role.create.name("admin")
+	    		  val r = Role.create.itemName("admin")
 	              r.save
 	              Log.info("Admin role created")
 	    	  	  r
