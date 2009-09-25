@@ -1,5 +1,25 @@
 package net.liftweb.democritus.model
 
+/*
+ * Copyright 2006-2008 WorldWide Conferencing, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ * 
+ * orderedMergeSort function taken from Programming in Scala by Martin Odersky,
+ * Lex Spoon and Bill Venners; Artima Press
+ */
+
+import _root_.scala.collection.immutable._
 import _root_.net.liftweb.mapper._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.sitemap._
@@ -103,7 +123,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   
    def tree(ns: NodeSeq): NodeSeq =     
           User.currentUser.map({user => 
-       findAll.flatMap({e => 
+       sortedTree.flatMap({e => 
             bind("item", chooseTemplate("item", "entry", ns),
                  "node" -> createNode(e)
                 )
@@ -115,9 +135,13 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
          val node = dbTableName.toLowerCase + "-" + item.id.toString
          val parent = dbTableName.toLowerCase + "-" + item.parentId.toString
          
+         def actions = link("", () => delete(item), Text("Delete")) ++ Text(" ") ++
+                               SHtml.a( {() =>                                                                       
+                                 SetHtml("item-save", edit(item))}, Text("Edit"))
+         
          item.parentId match {
-           case -1 => <tr id={node}><td>{Text(item.itemName.is)}</td></tr>  
-           case _ => <tr id={node} class={"child-of-" + parent}><td>{Text(item.itemName.is)}</td></tr>  
+           case -1 => <tr id={node}><td>{Text(item.itemName.is)}</td><td>{actions}</td></tr>  
+           case _ => <tr id={node} class={"child-of-" + parent}><td>{Text(item.itemName.is)}</td><td>{actions}</td></tr>  
          }
         	
   }          
@@ -134,7 +158,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
             <th>Parent</th>
 	        <th>
                 <lift:items.addNew>
-                   <item:addNew/>
+                   <item:addNew/>                   
                 </lift:items.addNew>
             </th>	        	        
         </tr>        
@@ -168,7 +192,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
 	        <th>{dbTableName + " name"}</th>
             <th>
                 <lift:items.addNew>
-                   <item:addNew/>
+                   <item:addNew/>                   
                 </lift:items.addNew>
             </th>	        	        
         </tr> 
@@ -187,9 +211,11 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
       <div id="item-save"/> 
 	  </lift:surround>
 	})
+  
+  def sortedTree = orderedMergeSort(findAll)
 }
 
-trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T]{
+trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T] with Ordered[T]{
   self: T =>
   def owner: T with MetaMegaTreeItem[T]
   
@@ -232,7 +258,30 @@ trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T]{
       case Nil => owner.create.itemName(name).saveMe
     } 
   
+  def compare(that:T)= this.parentId match {
+    case -1 => this.id compare that.id
+    case _ => this.parent.is compare that.id
+  } 
   
+  
+  def orderedMergeSort[T <:Ordered[T]](xs:List[T]): List[T] = {
+    def merge(xs: List[T], ys:List[T]): List[T] =
+      (xs, ys) match {
+        case (Nil, _) => ys
+        case (_, Nil) => xs
+        case (x :: xs1, y :: ys1) => 
+          if(x < y) x :: merge(xs1, ys)
+          else y :: merge(xs, ys1)          
+      }
+    
+    val n = xs.length /2
+    if(n == 0) xs
+    else {
+      val (ys, zs) = xs splitAt n
+      merge(orderedMergeSort(ys), orderedMergeSort(zs))
+    }
+      
+  }
 }
 
 
