@@ -13,7 +13,10 @@ import _root_.javax.servlet.http.{HttpServletRequest}
 import net.liftweb.democritus.snippet._
 import net.liftweb.democritus.api._
 import _root_.net.liftweb.mapper.view._
-import _root_.net.liftweb.widgets.menu._
+import _root_.net.liftweb.widgets._
+import menu._
+import tree._
+
 
 /**
   * A class that's instantiated early and run.  It allows the application
@@ -58,6 +61,8 @@ class Boot {
     MenuWidget.init
     JQueryUI.init  
     UserWithRoles.init
+    TreeView.init
+       
     
     S.addAround(DB.buildLoanWrapper)
   }
@@ -86,12 +91,12 @@ object DBVendor extends ConnectionManager {
 
   private def createOne: Box[Connection] = try {
      val driverName: String = Props.get("db.driver") openOr
-    //"com.mysql.jdbc.Driver"
-    "org.apache.derby.jdbc.EmbeddedDriver"
+    "com.mysql.jdbc.Driver"
+    //"org.apache.derby.jdbc.EmbeddedDriver"
 
     val dbUrl: String = Props.get("db.url") openOr
-    //"jdbc:mysql://localhost:3306/lift_democritus?user=<username>&password=<password>"
-    "jdbc:derby:lift_democritus;create=true"
+    "jdbc:mysql://localhost:3306/lift_democritus?user=glenn&password=monday"
+    //"jdbc:derby:lift_democritus;create=true"
     
 
     Class.forName(driverName)

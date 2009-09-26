@@ -1,8 +1,5 @@
 Democritus is an example Lift Content Management System.
 Now includes role-based authorization.
-
-Note: This application best viewed with Firefox. Some JQuery plugins may not display correctly in 
-newer versions of IE.
  
 Logged in "admin" users can create content that complies with
 Atom Publishing Protocol 1.0, feed the title and description

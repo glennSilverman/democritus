@@ -15,11 +15,9 @@ package net.liftweb.democritus.model
  * See the License for the specific language governing permissions
  * and limitations under the License.
  * 
- * orderedMergeSort function taken from Programming in Scala by Martin Odersky,
- * Lex Spoon and Bill Venners; Artima Press
  */
 
-import _root_.scala.collection.immutable._
+//import _root_.scala.collection.immutable._
 import _root_.net.liftweb.mapper._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.sitemap._
@@ -38,6 +36,7 @@ import Helpers._
 import _root_.scala.collection.mutable._
 import S._
 import net.liftweb.democritus.snippet._
+import _root_.net.liftweb.widgets.tree._
 
 
 trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMapper[Long, ModelType] {
@@ -81,14 +80,23 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   val treeSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
       case "items.buildTree" => buildTree
-      case "items.addNew" => addNew(create, S.??("Created"))
-      case "items.tree" => tree
-      
+      case "items.addNew" => addNew(create, S.??("Created"))      
     }
   }
   
-  def buildTree(in:NodeSeq):NodeSeq = 
-    JQueryTreeTable("tree")
+  def buildTree(in:NodeSeq):NodeSeq = TreeView("tree", JsObj(("animated",90)), loadTree, loadNode)
+  
+  def loadTree() = {
+    findAll.filter(e => e.parentId == -1).map(e => 
+      	Tree(e.itemName.is, e.id.is.toString, true))
+  }
+  
+  def loadNode(ids: String): List[Tree] = ids match {
+    case x => findAll.filter(e => e.parentId.toString equals x).map(e => 
+      	Tree(e.itemName.is, e.id.is.toString, true))    	
+                                                   
+  }
+    
     
   def addNew(item: ModelType, noticeMsg: String)(xhtml:NodeSeq):NodeSeq = 
     bind("item", xhtml, 
@@ -119,33 +127,8 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
                                  SetHtml("item-save", edit(e))}, Text("Edit")) }
                 )
           })
-			}) openOr Text("You're not logged in")  
+			}) openOr Text("You're not logged in")    
   
-   def tree(ns: NodeSeq): NodeSeq =     
-          User.currentUser.map({user => 
-       sortedTree.flatMap({e => 
-            bind("item", chooseTemplate("item", "entry", ns),
-                 "node" -> createNode(e)
-                )
-          })
-			}) openOr Text("You're not logged in") 
-  
-  
-  def createNode(item:ModelType):NodeSeq = {
-         val node = dbTableName.toLowerCase + "-" + item.id.toString
-         val parent = dbTableName.toLowerCase + "-" + item.parentId.toString
-         
-         def actions = link("", () => delete(item), Text("Delete")) ++ Text(" ") ++
-                               SHtml.a( {() =>                                                                       
-                                 SetHtml("item-save", edit(item))}, Text("Edit"))
-         
-         item.parentId match {
-           case -1 => <tr id={node}><td>{Text(item.itemName.is)}</td><td>{actions}</td></tr>  
-           case _ => <tr id={node} class={"child-of-" + parent}><td>{Text(item.itemName.is)}</td><td>{actions}</td></tr>  
-         }
-        	
-  }          
- 
   
   def listItems = Template({ () =>
   <lift:surround with="default" at="content">
@@ -186,39 +169,21 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
 	    <h3>{dbTableName + "s"}</h3>
        <div id="entryform">  
         <lift:Menu.item name={MenuName_ListView}/>
-        <table id="tree">
-        <thead>
-         <tr>
-	        <th>{dbTableName + " name"}</th>
-            <th>
-                <lift:items.addNew>
-                   <item:addNew/>                   
-                </lift:items.addNew>
-            </th>	        	        
-        </tr> 
-        </thead> 
-        <tbody>
-        <lift:items.tree>
-         	<item:entry>
-		      <item:node/>
-           </item:entry>           
-          </lift:items.tree>
-       </tbody>
-	  </table>
-     </div>
+          <ul id="tree">
+            
+          </ul>
+       </div>
       
       <hr />      
       <div id="item-save"/> 
 	  </lift:surround>
-	})
+	})  
   
-  def sortedTree = orderedMergeSort(findAll)
 }
 
-trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T] with Ordered[T]{
+trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T]{
   self: T =>
   def owner: T with MetaMegaTreeItem[T]
-  
   
   override def primaryKeyField = id
   
@@ -246,10 +211,10 @@ trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T] with Order
   def parentName =
 	  parent.obj.map(_.itemName.is) openOr "NA"
   
-  def parentId =
+  def parentId:Long =
     parent.obj.map(_.id.is) openOr -1
   
-  def parents = owner.findAll(By(owner.parent, owner.id))
+  def parents = owner.findAll(By(owner.parent, owner.id)) 
   
   def byItemName (name : String) = 
     owner.findAll(By(owner.itemName, name)) match {
@@ -258,30 +223,6 @@ trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T] with Order
       case Nil => owner.create.itemName(name).saveMe
     } 
   
-  def compare(that:T)= this.parentId match {
-    case -1 => this.id compare that.id
-    case _ => this.parent.is compare that.id
-  } 
-  
-  
-  def orderedMergeSort[T <:Ordered[T]](xs:List[T]): List[T] = {
-    def merge(xs: List[T], ys:List[T]): List[T] =
-      (xs, ys) match {
-        case (Nil, _) => ys
-        case (_, Nil) => xs
-        case (x :: xs1, y :: ys1) => 
-          if(x < y) x :: merge(xs1, ys)
-          else y :: merge(xs, ys1)          
-      }
-    
-    val n = xs.length /2
-    if(n == 0) xs
-    else {
-      val (ys, zs) = xs splitAt n
-      merge(orderedMergeSort(ys), orderedMergeSort(zs))
-    }
-      
-  }
 }
 
 
