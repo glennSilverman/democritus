@@ -52,6 +52,11 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   def calcPrefix = List(dbTableName)  
   
   def isAuthorized():Boolean
+  
+  def hasKids(n:ModelType) = findAll.filter(e => e.parentId == n.id.is) match {
+    case Nil => false
+    case _  => true
+  }
     
   def listTreeItemsMenu = 
     Menu(Loc(MenuName_List, "list" + Prefix :: Nil,  "List " + dbTableName + "s",                  
@@ -72,8 +77,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   val listSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
       case "items.addNew" => addNew(create, S.??("Created"))
-      case "items.list" => list
-      
+      case "items.list" => list      
     }
   }
   
@@ -84,18 +88,24 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
     }
   }
   
-  def buildTree(in:NodeSeq):NodeSeq = TreeView("tree", JsObj(("animated",90)), loadTree, loadNode)
+  def buildTree(in:NodeSeq):NodeSeq = TreeView("tree", JsObj(("toggle", JsRaw("""function() {console.log(this + " has been toggled");}"""))), loadTree, loadNode)
   
-  def loadTree() = {
-    findAll.filter(e => e.parentId == -1).map(e => 
-      	Tree(e.itemName.is, e.id.is.toString, true))
-  }
+  def node(n:ModelType) = {
+    def anchor = n.itemName.is
+    if(hasKids(n))
+       Tree(anchor, n.id.is.toString, true) 
+    else
+       Tree(anchor)
+ }
+  
+  def loadTree() = 
+    findAll.filter(e => e.parentId == -1).map(e => node(e))
+  
   
   def loadNode(ids: String): List[Tree] = ids match {
     case x => findAll.filter(e => e.parentId.toString equals x).map(e => 
-      	Tree(e.itemName.is, e.id.is.toString, true))    	
-                                                   
-  }
+     	node(e))
+    }
     
     
   def addNew(item: ModelType, noticeMsg: String)(xhtml:NodeSeq):NodeSeq = 
@@ -166,14 +176,18 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   def treeItems = Template({ () =>
 	  <lift:surround with="default" at="content">
 	   <lift:items.buildTree/> 
-	    <h3>{dbTableName + "s"}</h3>
-       <div id="entryform">  
-        <lift:Menu.item name={MenuName_ListView}/>
-          <ul id="tree">
-            
-          </ul>
+	    <h3>{dbTableName + "s"}</h3>        
+       <div id="entryform"> 
+          <div class="column span-5"> 
+             <lift:Menu.item name={MenuName_ListView}/>
+             <ul id="tree"/>
+          </div>
+          <div class="column span-10">
+             <lift:items.addNew>
+                   <item:addNew/>                   
+                </lift:items.addNew>
+          </div>
        </div>
-      
       <hr />      
       <div id="item-save"/> 
 	  </lift:surround>
@@ -215,6 +229,7 @@ trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T]{
     parent.obj.map(_.id.is) openOr -1
   
   def parents = owner.findAll(By(owner.parent, owner.id)) 
+  
   
   def byItemName (name : String) = 
     owner.findAll(By(owner.itemName, name)) match {
