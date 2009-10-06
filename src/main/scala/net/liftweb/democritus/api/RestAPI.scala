@@ -1,6 +1,8 @@
 package net.liftweb.democritus.api
 
 import _root_.net.liftweb.http._
+import js._
+import JE._
 import rest._
 import _root_.net.liftweb.util._
 import StringHelpers._
@@ -9,13 +11,19 @@ import _root_.net.liftweb.mapper._
 import java.util.Date
 import net.liftweb.democritus.utils.Utilities._
 import net.liftweb.democritus.model._
+import _root_.scala.collection.mutable._
+import _root_.net.liftweb.json._
+
 
 object RestAPI extends XMLApiHelper {
 	def dispatch:LiftRules.DispatchPF = {
 	  case Req("api" :: "content" :: eid ::atom :: Nil, "", GetRequest) => () => showContentAtom(eid:String)
 	  case Req("api" :: "content" :: all :: tags :: atom :: Nil, "", GetRequest) => () => listContentByTagsAtom(tags:String)  
       case Req("api" :: "content" :: atom :: Nil, "", GetRequest)=> () => listContentsAtom
-      case Req("api" :: "content" :: Nil, "", PutRequest)=> () => saveContent      
+      case Req("api" :: "content" :: Nil, "", PutRequest)=> () => saveContent
+      case Req("api" :: "json" :: "role" :: id :: Nil, "", GetRequest) => () => getRoleJson(id:String, "role")
+      case Req("api" :: "json" :: "tag" :: id :: Nil, "", GetRequest) => () => getRoleJson(id:String, "tag")
+      case Req("api" :: "json" :: "nav_item" :: id :: Nil, "", GetRequest) => () => getRoleJson(id:String, "nav_item")
       
 	  //Invalid API request - route to our error handler
       case Req("api" :: x :: Nil, "", _) => failure _
@@ -151,9 +159,24 @@ object RestAPI extends XMLApiHelper {
  	  }
       
      Log.info(feedWrapper(eList))
- 	 AtomResponse(feedWrapper(eList)) 
-    
+ 	 AtomResponse(feedWrapper(eList))
     	 
-   } 
+   }
+   
+    //Reacts to GET Role from id request
+    def getRoleJson(id:String, item:String ):Box[LiftResponse] = {
+        val xml = item match {
+          case "role" => Role.getXml(id)
+          case "tag" => Tag.getXml(id)
+          case "nav_item" => MenutreeItem.getXml(id)
+          case "" => null
+        }
+                
+    	val out = Xml.toJson(xml)
+
+        Full(JsonResponse(JsRaw(Printer.compact(JsonAST.render(out)))))
+       }
+   
+    
      
 }
