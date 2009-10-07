@@ -88,44 +88,27 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   lazy val treeSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
       case "items.buildTree" => buildTree
-      case "items.addNew" => addNew(create, S.??("Created"))
-      //case "list.json_head" => json_head
+      case "items.addNew" => addNew(create, S.??("Created"))      
     }
   } 
   
  
     
-  def buildTree(in:NodeSeq):NodeSeq = { 
-      
-   object MyJqItem {
-    def apply(content: JsExp) = new JsExp with JQueryRight with JQueryLeft {
-      def toJsCmd = "text("+content.toJsCmd+")"       
-    }
-   }
+  def buildTree(in:NodeSeq):NodeSeq = {    
    
-   val callback = AnonFunc("data", JqId("json_result") >> MyJqItem(JsVar("data"))).toJsCmd 
-   
-   object MyJqGet {
-    def apply(content: JsExp) = new JsExp with JQueryRight with JQueryLeft {
-      def toJsCmd = "$.get("+content.toJsCmd+ JsRaw("""+this.id""")+","+callback+")"      
-    }
-   }
-   
-    object MyJqGetJSON{
-    def apply(content: JsExp) = new JsExp with JQueryRight with JQueryLeft {
-      def toJsCmd = "$.getJSON("+content.toJsCmd+ JsRaw("""+this.id""")+","+callback+")"      
-    }
-   }  
+   object MyJqLoad {
+     def apply(content: JsExp) = new JsExp with JQueryRight with JQueryLeft {
+       def toJsCmd = JqId("json_result").toJsCmd + ".load(" + content.toJsCmd + JsRaw("""+this.id""") + ")"
+     }
+   } 
      
    val host = "http://" + S.hostName  
    val link = host + ":8080" + S.contextPath + "/api/json/" + dbTableName.toLowerCase + "/"
    
-   val func = AnonFunc( MyJqGet(link))
+   val func = AnonFunc( MyJqLoad(link))
    
    TreeView("tree", JsObj(("persist", "location"), ("toggle",  func)), loadTree, loadNode)
   }
-  
-  
      
   def node(n:ModelType) = {
     def anchor = n.itemName.is
@@ -146,35 +129,20 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
      	node(e))
     }
     
-  def treeActions(in:ModelType) :NodeSeq	= {
-    link("", () => delete(in), Text("Delete")) ++ Text(" ") ++
-             SHtml.a( {() =>                                                                       
-          SetHtml("item-save", edit(in))}, Text("Edit"))
-  }
-  
-    
   def addNew(item: ModelType, noticeMsg: String)(xhtml:NodeSeq):NodeSeq = 
     bind("item", xhtml, 
 	       	"addNew" -> {SHtml.a({ ()=> 
 	       	  SetHtml("item-save", edit(item))},
               Text(MenuTitle_Add) 
 	       	  )}
-	         ) 
-  
-      
-  def edit(item: ModelType) =        
-      <form>
-  		{item.toForm(Full("Save"), { _.save })}
-      </form>
- 
+	         )
+   
+  def edit(item:ModelType) =
+    <form>{item.toForm(Full("Save"), { _.save })}</form>
+    
   def delete(item:ModelType) = {
          item.delete_!
-       }
-  
-  def renderItem = {
-    def tableSeq = <table><tr><td>Name</td><td>{JsVar("it", "name")}</td></tr></table>	
-    Jx(tableSeq)
-  }
+       }  
   
   def list(ns: NodeSeq): NodeSeq =    
       
@@ -184,11 +152,12 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
                  "name" -> Text(e.itemName.is),
                  "parent" -> Text(e.parentName),
                  "actions" ->{ link("", () => delete(e), Text("Delete")) ++ Text(" ") ++
-                               SHtml.a( {() =>                                                                       
+                                SHtml.a( {() =>
                                  SetHtml("item-save", edit(e))}, Text("Edit")) }
                 )
           })
 			}) openOr Text("You're not logged in") 
+  
   
   
   def listItems = Template({ () =>
@@ -236,13 +205,12 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
           <div class="column span-10">
              <lift:items.addNew>
                    <item:addNew/>                   
-                </lift:items.addNew>
-             <div id="item-save"/>
+                </lift:items.addNew>            
              <div id="json_result"></div>
           </div>
        </div>
       <hr />      
-      
+      <div id="item-save"/>
 	  </lift:surround>
 	})
   
@@ -264,6 +232,12 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
          
       }
   }
+  
+  def findById(id:String):ModelType =
+    findAll.filter(e => e.id.toString equals id) match {
+      case Nil => null
+      case x => x.first
+    } 
    
 }
 

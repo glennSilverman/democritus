@@ -21,9 +21,9 @@ object RestAPI extends XMLApiHelper {
 	  case Req("api" :: "content" :: all :: tags :: atom :: Nil, "", GetRequest) => () => listContentByTagsAtom(tags:String)  
       case Req("api" :: "content" :: atom :: Nil, "", GetRequest)=> () => listContentsAtom
       case Req("api" :: "content" :: Nil, "", PutRequest)=> () => saveContent
-      case Req("api" :: "json" :: "role" :: id :: Nil, "", GetRequest) => () => getRoleJson(id:String, "role")
-      case Req("api" :: "json" :: "tag" :: id :: Nil, "", GetRequest) => () => getRoleJson(id:String, "tag")
-      case Req("api" :: "json" :: "nav_item" :: id :: Nil, "", GetRequest) => () => getRoleJson(id:String, "nav_item")
+      case Req("api" :: "json" :: "role" :: id :: Nil, "", GetRequest) => () => getJSONResp(id:String, "role")
+      case Req("api" :: "json" :: "tag" :: id :: Nil, "", GetRequest) => () => getJSONResp(id:String, "tag")
+      case Req("api" :: "json" :: "nav_item" :: id :: Nil, "", GetRequest) => () => getJSONResp(id:String, "nav_item")
       
 	  //Invalid API request - route to our error handler
       case Req("api" :: x :: Nil, "", _) => failure _
@@ -162,21 +162,19 @@ object RestAPI extends XMLApiHelper {
  	 AtomResponse(feedWrapper(eList))
     	 
    }
-   
-    //Reacts to GET Role from id request
-    def getRoleJson(id:String, item:String ):Box[LiftResponse] = {
-        val xml = item match {
-          case "role" => Role.getXml(id)
-          case "tag" => Tag.getXml(id)
-          case "nav_item" => MenutreeItem.getXml(id)
+    
+   def getJSONResp(id:String, item:String ):Box[LiftResponse] = {
+       
+       val html = item match {
+          case "role" => <form>{Role.findById(id).toForm(Empty,"")}</form>
+          case "tag" => <form>{Tag.findById(id).toForm(Empty,"")}</form>
+          case "nav_item" => <form>{MenutreeItem.findById(id).toForm(Empty,"")}</form>
           case "" => null
         }
-                
-    	val out = Xml.toJson(xml)
-
-        Full(JsonResponse(JsRaw(Printer.compact(JsonAST.render(out)))))
-       }
-   
+       
+        Full(CreatedResponse(html, "text/xml"))
+    	
+    }
     
      
 }
