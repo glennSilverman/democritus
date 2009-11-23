@@ -9,6 +9,7 @@ import java.io._
  
 import _root_.scala.xml._
 import net.liftweb._
+import common._
 import http._
 import util._
 import S._

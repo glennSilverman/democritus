@@ -1,5 +1,6 @@
 package net.liftweb.scala.democritus
 
+import _root_.net.liftweb.common._
 import _root_.java.io.File
 import _root_.junit.framework._
 import Assert._

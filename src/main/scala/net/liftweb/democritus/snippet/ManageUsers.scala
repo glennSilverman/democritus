@@ -14,14 +14,14 @@ import _root_.scala.collection.mutable._
 
 
 class UserView(entity:User, snippet:ManageUsers) extends ModelView[User](entity, snippet){
-  override val editAction = TheBindParam("edit", snippet.link("edit", ()=>load, Text(S?("Edit Roles"))))   
+  override lazy val editAction = TheBindParam("edit", snippet.link("edit", ()=>load, Text(S?("Edit Roles"))))   
   
 }
 
 
 class ManageUsers extends ModelSnippet[User]{ 
   
-   val view: ModelView[User] =  new UserView(new User, this)
+   val view =  new UserView(new User, this)
   
   /**
    * The list snippet

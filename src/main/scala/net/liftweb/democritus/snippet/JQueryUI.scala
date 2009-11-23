@@ -3,7 +3,7 @@ package net.liftweb.democritus.snippet
 import _root_.scala.xml._
 import net.liftweb._
 import http._
-
+import common._
 import _root_.scala.xml.{NodeSeq, Node, Elem, PCData, Text, Unparsed}
 import _root_.net.liftweb.http.{LiftRules, S}
 import SHtml._
@@ -13,7 +13,7 @@ import js._
 import JsCmds._
 import JE._
 import net.liftweb.http.js.jquery._
-import JsCmds._
+
 import JqJE._
 
 import mapper._
