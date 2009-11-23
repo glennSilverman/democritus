@@ -1,5 +1,6 @@
 package net.liftweb.democritus.api
 
+import _root_.net.liftweb.common._
 import _root_.net.liftweb.http._
 import js._
 import JE._
@@ -20,10 +21,8 @@ object RestAPI extends XMLApiHelper {
 	  case Req("api" :: "content" :: eid ::atom :: Nil, "", GetRequest) => () => showContentAtom(eid:String)
 	  case Req("api" :: "content" :: all :: tags :: atom :: Nil, "", GetRequest) => () => listContentByTagsAtom(tags:String)  
       case Req("api" :: "content" :: atom :: Nil, "", GetRequest)=> () => listContentsAtom
-      case Req("api" :: "content" :: Nil, "", PutRequest)=> () => saveContent
-      case Req("api" :: "json" :: "role" :: id :: Nil, "", GetRequest) => () => getJSONResp(id:String, "role")
-      case Req("api" :: "json" :: "tag" :: id :: Nil, "", GetRequest) => () => getJSONResp(id:String, "tag")
-      case Req("api" :: "json" :: "nav_item" :: id :: Nil, "", GetRequest) => () => getJSONResp(id:String, "nav_item")
+      case Req("api" :: "content" :: Nil, "", PutRequest)=> () => saveContent      
+      
       
 	  //Invalid API request - route to our error handler
       case Req("api" :: x :: Nil, "", _) => failure _
@@ -148,9 +147,9 @@ object RestAPI extends XMLApiHelper {
      }
     
     //Reacts to PUT request
-   def saveContent:LiftResponse = {
+   def saveContent:LiftResponse = 
      addContent(S.request open_!) 
-   }
+   
    
    //Reacts to Get all reguest
    def listContentsAtom:AtomResponse = {
@@ -162,19 +161,5 @@ object RestAPI extends XMLApiHelper {
  	 AtomResponse(feedWrapper(eList))
     	 
    }
-    
-   def getJSONResp(id:String, item:String ):Box[LiftResponse] = {
-       
-       val html = item match {
-          case "role" => <form>{Role.findById(id).toForm(Empty,"")}</form>
-          case "tag" => <form>{Tag.findById(id).toForm(Empty,"")}</form>
-          case "nav_item" => <form>{MenutreeItem.findById(id).toForm(Empty,"")}</form>
-          case "" => null
-        }
-       
-        Full(CreatedResponse(html, "text/xml"))
-    	
-    }
-    
      
 }

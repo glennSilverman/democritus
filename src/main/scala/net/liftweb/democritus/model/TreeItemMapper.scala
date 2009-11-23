@@ -18,6 +18,7 @@ package net.liftweb.democritus.model
  */
 
 //import _root_.scala.collection.immutable._
+import _root_.net.liftweb.common._
 import _root_.net.liftweb.mapper._
 import _root_.net.liftweb.util._
 import _root_.net.liftweb.sitemap._
@@ -48,7 +49,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   lazy val MenuName_ListView = "Listview" + Prefix
   lazy val MenuName_TreeView = "Treeview" + Prefix
   lazy val MenuTitle_Add = "Add " + Prefix.head
-  lazy val MenuName_Json = "Json " + Prefix
+  lazy val MenuName_Edit = "Edit " + Prefix
   
   def calcPrefix = List(dbTableName)  
   
@@ -73,10 +74,9 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
 			      treeItems, treeSnippets, If(/*() => User.isa_?("admin")*/ isAuthorized, S.?("not_authorized")),
          Hidden))
   
-  //Json Menu - must include in siteMap for RewriteRequest to work
-  def jsonMenu = Menu(Loc(MenuName_Json, List("api", "json", "role") -> true, "Json Content", Hidden))  
+  def treeEditViewMenu = Menu(Loc(MenuName_Edit, List("api", "edit") -> true, "Edit Tree", Hidden))  
   
-  def menus:List[Menu] = listTreeItemsMenu :: buildListViewMenu :: buildTreeViewMenu :: jsonMenu :: Nil
+  def menus:List[Menu] = listTreeItemsMenu :: buildListViewMenu :: buildTreeViewMenu :: Nil
   
   lazy val listSnippets = new DispatchLocSnippets {
     val dispatch: PartialFunction[String, NodeSeq => NodeSeq] = {
@@ -91,24 +91,23 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
       case "items.addNew" => addNew(create, S.??("Created"))      
     }
   } 
-  
- 
     
   def buildTree(in:NodeSeq):NodeSeq = {    
    
-   object MyJqLoad {
-     def apply(content: JsExp) = new JsExp with JQueryRight with JQueryLeft {
-       def toJsCmd = JqId("json_result").toJsCmd + ".load(" + content.toJsCmd + JsRaw("""+this.id""") + ")"
-     }
-   } 
-     
-   val host = "http://" + S.hostName  
-   val link = host + ":8080" + S.contextPath + "/api/json/" + dbTableName.toLowerCase + "/"
+	   object MyJqLoad {
+	     def apply(content: JsExp) = new JsExp with JQueryRight with JQueryLeft {
+	       def toJsCmd = JqId("item_edit").toJsCmd + ".load(" + content.toJsCmd + JsRaw("""+this.id""") + ")"
+	     }
+	   }
+	       
+       val host = "http://" + S.hostName  
+       val link = host + ":8080" + S.contextPath + "/api/edit/" + dbTableName.toLowerCase + "/"
    
-   val func = AnonFunc( MyJqLoad(link))
-   
-   TreeView("tree", JsObj(("persist", "location"), ("toggle",  func)), loadTree, loadNode)
-  }
+       val func = AnonFunc( MyJqLoad(link))
+       
+       TreeView("tree", JsObj(("persist", "location"), ("toggle",  func)), loadTree, loadNode)
+    }
+  
      
   def node(n:ModelType) = {
     def anchor = n.itemName.is
@@ -132,18 +131,32 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   def addNew(item: ModelType, noticeMsg: String)(xhtml:NodeSeq):NodeSeq = 
     bind("item", xhtml, 
 	       	"addNew" -> {SHtml.a({ ()=> 
-	       	  SetHtml("item-save", edit(item))},
+	       	  SetHtml("item_create", edit(item))},
               Text(MenuTitle_Add) 
 	       	  )}
 	         )
-   
+  
+  def treeActions(xhtml:NodeSeq):NodeSeq = {
+    
+    def deleteMe = {
+      Log.info("Entering DeleteMe...")
+    }
+            
+	 bind("treeItem", xhtml,
+	         "actions" -> {link("", ()=>deleteMe, Text("Delete"))++Text(" | ")++
+	             link("", ()=>true, Text("Save"))}
+	         )
+      
+      
+  }
+  
   def edit(item:ModelType) =
     <form>{item.toForm(Full("Save"), { _.save })}</form>
     
   def delete(item:ModelType) = {
          item.delete_!
-       }  
-  
+       }
+    
   def list(ns: NodeSeq): NodeSeq =    
       
      User.currentUser.map({user => 
@@ -188,7 +201,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
       </div>
       
       <hr />      
-      <div id="item-save"/>      
+      <div id="item_create"/>      
       
 </lift:surround>
   })
@@ -202,19 +215,17 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
              <lift:Menu.item name={MenuName_ListView}/>
              <ul id="tree"/>
           </div>
-          <div class="column span-10">
-             <lift:items.addNew>
-                   <item:addNew/>                   
-                </lift:items.addNew>            
-             <div id="json_result"></div>
+          <div class="column span-5">
+            <div id="item_edit"/>
           </div>
        </div>
-      <hr />      
-      <div id="item-save"/>
+      <hr />
+      <lift:items.addNew>
+         <item:addNew/>                   
+      </lift:items.addNew>         
+      <div id="item_create"/>
 	  </lift:surround>
 	})
-  
-  
   
   def getXml(id:String): Node= { 
         
@@ -232,13 +243,13 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
          
       }
   }
-  
-  def findById(id:String):ModelType =
-    findAll.filter(e => e.id.toString equals id) match {
-      case Nil => null
-      case x => x.first
+ 
+  def editMe(id:String): Box[LiftResponse] = 
+    findAll(By(owner.id, Integer.parseInt(id))) match {
+      case Nil => Empty
+      case rs =>  Full(CreatedResponse(edit(rs.first), "text/xhtml" ))  
     } 
-   
+  
 }
 
 trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T]{
@@ -282,7 +293,9 @@ trait MegaTreeItem[T <: MegaTreeItem[T]] extends KeyedMapper[Long, T]{
       case o :: rest => o
       // create a treeItem for the given name if it doesn't exist... 
       case Nil => owner.create.itemName(name).saveMe
-    }  
+    } 
+  
+  def saveItem = save
   
 }
 

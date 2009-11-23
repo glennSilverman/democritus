@@ -1,5 +1,7 @@
 Democritus is an example Lift Content Management System.
-Now includes role-based authorization.
+Note: Uses Lift 1.1-SNAPSHOT. 
+
+Includes role-based authorization.
  
 Logged in "admin" users can create content that complies with
 Atom Publishing Protocol 1.0, feed the title and description
