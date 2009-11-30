@@ -15,13 +15,7 @@ import _root_.net.liftweb.democritus.model._
 object UserWithRoles {
 	
   def init = {
-    
-    LiftRules.dispatch.append {
-    	case Req("api" :: "edit" :: "role" :: id :: Nil, _, _) => ()=>Role.editMe(id)
-        case Req("api" :: "edit" :: "tag" :: id :: Nil, _, _) => ()=>Tag.editMe(id)
-        case Req("api" :: "edit" :: "nav_item" :: id :: Nil, _, _) => ()=>MenutreeItem.editMe(id)
-    }
-    
+   
     LiftRules.addToPackages("net.liftweb.usermon")
     Schemifier.schemify(true, Log.infoF _, Role, UserRole, MenutreeItem)
     

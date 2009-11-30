@@ -72,9 +72,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
   def buildTreeViewMenu = 
 	 Menu(Loc(MenuName_TreeView, "tree" + Prefix :: Nil, "Tree View",
 			      treeItems, treeSnippets, If(/*() => User.isa_?("admin")*/ isAuthorized, S.?("not_authorized")),
-         Hidden))
-  
-  def treeEditViewMenu = Menu(Loc(MenuName_Edit, List("api", "edit") -> true, "Edit Tree", Hidden))  
+         Hidden)) 
   
   def menus:List[Menu] = listTreeItemsMenu :: buildListViewMenu :: buildTreeViewMenu :: Nil
   
@@ -94,16 +92,9 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
     
   def buildTree(in:NodeSeq):NodeSeq = {    
    
-	   object MyJqLoad {
-	     def apply(content: JsExp) = new JsExp with JQueryRight with JQueryLeft {
-	       def toJsCmd = JqId("item_edit").toJsCmd + ".load(" + content.toJsCmd + JsRaw("""+this.id""") + ")"
-	     }
-	   }
-	       
-       val host = "http://" + S.hostName  
-       val link = host + ":8080" + S.contextPath + "/api/edit/" + dbTableName.toLowerCase + "/"
-   
-       val func = AnonFunc( MyJqLoad(link))
+       val func = AnonFunc( SHtml.ajaxCall(JsRaw("this.id"), (id: String) =>
+        SetHtml("item_edit", owner.find(id).map(edit) openOr
+        		NodeSeq.Empty))._2 ) 		
        
        TreeView("tree", JsObj(("persist", "location"), ("toggle",  func)), loadTree, loadNode)
     }
@@ -166,7 +157,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
                  "parent" -> Text(e.parentName),
                  "actions" ->{ link("", () => delete(e), Text("Delete")) ++ Text(" ") ++
                                 SHtml.a( {() =>
-                                 SetHtml("item-save", edit(e))}, Text("Edit")) }
+                                 SetHtml("item_create", edit(e))}, Text("Edit")) }
                 )
           })
 			}) openOr Text("You're not logged in") 
@@ -225,30 +216,7 @@ trait MetaMegaTreeItem[ModelType <: MegaTreeItem[ModelType]] extends KeyedMetaMa
       </lift:items.addNew>         
       <div id="item_create"/>
 	  </lift:surround>
-	})
-  
-  def getXml(id:String): Node= { 
-        
-      def children(in:Elem): List[Node] = in match {
-       case null => Nil
-       case x => <id>{x \\ "@id"}</id> :: <name>{x \\ "@itemname"}</name> :: Nil
-     }  
-  
-      findAll.filter(e => e.id.toString equals id)match {
-         case Nil => "Not a valid response"
-         case x => {
-           val iter = children(x.first.toXml).elements
-           Elem(null, elemName, null, TopScope, iter.next, iter.next)
-         }
-         
-      }
-  }
- 
-  def editMe(id:String): Box[LiftResponse] = 
-    findAll(By(owner.id, Integer.parseInt(id))) match {
-      case Nil => Empty
-      case rs =>  Full(CreatedResponse(edit(rs.first), "text/xhtml" ))  
-    } 
+	})  
   
 }
 
